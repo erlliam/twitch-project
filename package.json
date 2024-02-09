@@ -1,0 +1,19 @@
+{
+  "name": "digital-ocean-typescript-tut",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "prettier": "3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">= 21",
+    "npm": ">= 10"
+  }
+}

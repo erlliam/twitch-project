@@ -1,0 +1,4 @@
+build
+# node_modules seems to be ignored by default
+node_modules 
+package-lock.json
