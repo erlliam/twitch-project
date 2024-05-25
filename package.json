@@ -15,5 +15,6 @@
   "engines": {
     "node": ">= 21",
     "npm": ">= 10"
-  }
+  },
+  "type": "module"
 }
