@@ -1,5 +1,7 @@
 import { WebSocket, type WebSocket as WebSocketType } from "ws";
 
+import { storePrivmsg } from "./database.js";
+
 interface ParsedMessage {
   tags: Record<string, string>;
   prefix: string;
@@ -207,13 +209,15 @@ function main() {
           //   id: parsedMessage.tags["user-id"],
           //   name: parsedMessage.tags["display-name"],
           // });
-          // storePrivMsg({
-          //   id: parsedMessage.tags.id,
-          //   userId: parsedMessage.tags["user-id"],
-          //   roomId: parsedMessage.tags["room-id"],
-          //   timestamp: parsedMessage.tags["tmi-sent-ts"],
-          //   message: parsedMessage.params[1],
-          // });
+
+          storePrivmsg({
+            id: parsedMessage.tags.id,
+            userId: parseInt(parsedMessage.tags["user-id"]),
+            roomId: parseInt(parsedMessage.tags["room-id"]),
+            timestamp: parseInt(parsedMessage.tags["tmi-sent-ts"]),
+            message: parsedMessage.params[1],
+          });
+
           console.log(
             `${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
           );
