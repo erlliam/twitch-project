@@ -5,6 +5,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "postgres": "^3.4.4",
     "ws": "^8.16.0"
   },
   "devDependencies": {
