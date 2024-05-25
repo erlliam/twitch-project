@@ -214,9 +214,9 @@ function main() {
           //   timestamp: parsedMessage.tags["tmi-sent-ts"],
           //   message: parsedMessage.params[1],
           // });
-          // console.log(
-          //   `${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
-          // );
+          console.log(
+            `${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
+          );
         } else if (parsedMessage.command === "CLEARCHAT") {
           // storeClearChat({
           //   id: parsedMessage.tags.id,
