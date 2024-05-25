@@ -11,7 +11,7 @@ const TWITCH_IRC_URI = "wss://irc-ws.chat.twitch.tv:443";
 const TWITCH_TMI = "tmi.twitch.tv";
 const TWITCH_PASS = "asdf532"; // PASS <random_string>
 const TWITCH_NICK = "justinfan12345"; // NICK justinfan<random_number>
-const TWITCH_TARGET_CHANNEL = "jynxzi";
+const TWITCH_TARGET_CHANNEL = "xqc";
 
 let capabilitiesEnabled = false;
 let authenticated = false;
