@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    #volumes:
+    #  - type: tmpfs
+    #    target: /dev/shm
+    #    tmpfs:
+    #      size: 134217728 # 128*2^20 bytes = 128Mb
+    environment:
+      POSTGRES_PASSWORD: example
+
+  # UI tool for postgres, pretty cool
+  adminer:
+    image: adminer
+
+  web:
+    build: ./nginx
+    ports:
+      - 8080:80
+    develop:
+      watch:
+        - action: sync
+          path: ./nginx/public/
+          target: /usr/share/nginx/html/
+        - action: sync+restart
+          path: ./nginx/nginx.conf
+          target: /etc/nginx/nginx.conf
+
+  api:
+    build: ./be
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./be
+          target: /app
+
+  # data-harvester:
+  #   build: ./data-harvester
