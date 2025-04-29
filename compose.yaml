@@ -37,5 +37,10 @@ services:
           path: ./be
           target: /app
 
-  # data-harvester:
-  #   build: ./data-harvester
+  data-harvester:
+    build: ./data-harvester
+    develop:
+      watch:
+        - action: rebuild
+          path: ./data-harvester
+          target: /app
