@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import fastifySwagger from "@fastify/swagger";
 import fastifyPostgres from "@fastify/postgres";
 
 import routes from "./src/routes.js";
@@ -6,6 +7,8 @@ import routes from "./src/routes.js";
 const fastify = Fastify({
   logger: true,
 });
+
+fastify.register(fastifySwagger);
 
 fastify.register(fastifyPostgres, {
   connectionString: "postgres://postgres:example@db:5432",
