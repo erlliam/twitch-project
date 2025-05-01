@@ -1,14 +1,36 @@
 export default function (fastify, options) {
-  fastify.get("/:id", async (request, reply) => {
+  fastify.get("/tracking", async (request, reply) => {
     try {
-      const { rows } = await client.query(
-        "SELECT id, username, hash, salt FROM users WHERE id=$1",
-        [request.params.id]
-      );
-      // Note: avoid doing expensive computation here, this will block releasing the client
+      const { rows } = await fastify.pg.query(`
+        SELECT channel_id, active
+        FROM track;
+      `);
+
       return rows;
-    } catch {
-      return "Error: failed to query datab1";
+    } catch (error) {
+      console.log(error);
+      return "Error: Failed to query tracking table";
+    }
+  });
+
+  const trackingOptions = {
+    schema: {
+      body: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+        },
+      },
+    },
+  };
+  fastify.post("/tracking", trackingOptions, async (request, reply) => {
+    try {
+      await fastify.pg.query(`
+        INSERT INTO track (channel_id)
+        VALUES ($1)`);
+    } catch (error) {
+      console.log(error);
+      return "Error: Failed to add channel to tracking table";
     }
   });
 }

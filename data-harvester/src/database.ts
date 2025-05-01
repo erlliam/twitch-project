@@ -19,8 +19,23 @@ const client = new Client({
 await client.connect();
 
 function initializeTables() {
+  createChannelsToTrackTable();
+
   createUsersTable();
   createPrivmsgTable();
+}
+
+async function createChannelsToTrackTable() {
+  try {
+    await client.query(`CREATE TABLE IF NOT EXISTS track (
+      id          SERIAL PRIMARY KEY,
+      channel_id  INT REFERENCES users(id) UNIQUE NOT NULL,
+      active      BOOLEAN DEFAULT TRUE
+    )`);
+  } catch {
+    console.error("Failed to create track table");
+    process.exit();
+  }
 }
 
 async function createPrivmsgTable() {
