@@ -8,7 +8,10 @@ const fastify = Fastify({
   logger: true,
 });
 
-fastify.register(fastifySwagger);
+await fastify.register(fastifySwagger);
+await fastify.register(import("@fastify/swagger-ui"), {
+  routePrefix: "/api/docs",
+});
 
 fastify.register(fastifyPostgres, {
   connectionString: "postgres://postgres:example@db:5432",
