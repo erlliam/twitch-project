@@ -1,34 +1,37 @@
 import { Client } from "pg";
 
+type User = {
+  id: String;
+  name: String;
+};
+
+type Privmsg = {
+  id: String;
+  userId: Number;
+  roomId: Number;
+  timestamp: Number;
+  message: String;
+};
+
 const client = new Client({
   connectionString: "postgres://postgres:example@db:5432",
 });
 await client.connect();
 
 function initializeTables() {
+  createUsersTable();
   createPrivmsgTable();
-  // createClearchatTable();
-  // createRoomTable();
-  // createAccountTable();
-}
-
-interface Privmsg {
-  id: String;
-  userId: Number;
-  roomId: Number;
-  timestamp: Number;
-  message: String;
 }
 
 async function createPrivmsgTable() {
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS privmsg (
-      id          uuid,
-      user_id     int,
-      room_id     int,
-      timestamp   timestamptz,
-      message     text
-      )`);
+      id          UUID PRIMARY KEY,
+      user_id     INT REFERENCES users(id),
+      room_id     INT REFERENCES users(id),
+      timestamp   TIMESTAMPTZ NOT NULL,
+      message     TEXT NOT NULL
+    )`);
   } catch {
     console.error("Failed to create privmsg table");
     process.exit();
@@ -54,7 +57,33 @@ export async function storePrivmsg({
     await client.query(text, values);
   } catch (error) {
     console.error(error);
-    process.exit();
+  }
+}
+
+async function createUsersTable() {
+  try {
+    await client.query(`CREATE TABLE IF NOT EXISTS users (
+      id          INT PRIMARY KEY,
+      name        TEXT NOT NULL
+    )`);
+  } catch {
+    console.error("Failed to create users table");
+  }
+}
+
+export async function storeUser({ id, name }: User) {
+  try {
+    const text = `
+      INSERT INTO users (id, name)
+      VALUES ($1, $2)
+      ON CONFLICT (id) DO UPDATE
+        SET name = EXCLUDED.name
+        WHERE users.name IS DISTINCT FROM EXCLUDED.name
+    `;
+    const values = [id, name];
+    await client.query(text, values);
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -73,42 +102,6 @@ initializeTables();
 //     process.exit();
 //   });
 // }
-
-// function createAccountTable() {
-//   sql`CREATE TABLE IF NOT EXISTS accounts (
-//       id          int,
-//       name        text
-//     )`.catch(() => {
-//     console.error("Failed to create account table");
-//     process.exit();
-//   });
-// }
-
-// function createRoomTable() {
-//   sql`CREATE TABLE IF NOT EXISTS room (
-//       id          int,
-//       name        text
-//     )`.catch(() => {
-//     console.error("Failed to create room table");
-//     process.exit();
-//   });
-// }
-
-// storeUser({
-//   id: parsedMessage.tags["user-id"],
-//   name: parsedMessage.tags["display-name"],
-// });
-// storePrivMsg({
-//   id: parsedMessage.tags.id,
-//   userId: parsedMessage.tags["user-id"],
-//   roomId: parsedMessage.tags["room-id"],
-//   timestamp: parsedMessage.tags["tmi-sent-ts"],
-//   message: parsedMessage.params[1],
-// });
-
-// console.log(
-//   `${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
-// );
 
 // storeClearChat({
 //   id: parsedMessage.tags.id,

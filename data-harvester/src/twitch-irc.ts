@@ -1,6 +1,6 @@
 import { WebSocket, type WebSocket as WebSocketType } from "ws";
 
-import { storePrivmsg } from "./database.js";
+import { storePrivmsg, storeUser } from "./database.js";
 
 interface ParsedMessage {
   tags: Record<string, string>;
@@ -13,7 +13,9 @@ const TWITCH_IRC_URI = "wss://irc-ws.chat.twitch.tv:443";
 const TWITCH_TMI = "tmi.twitch.tv";
 const TWITCH_PASS = "asdf532"; // PASS <random_string>
 const TWITCH_NICK = "justinfan12345"; // NICK justinfan<random_number>
-const TWITCH_TARGET_CHANNEL = "marlon";
+
+// todo: Add twitch target channel to users table in database, we must hit the twitch API for this part
+const TWITCH_TARGET_CHANNEL = "missmikkaa";
 
 let capabilitiesEnabled = false;
 let authenticated = false;
@@ -205,10 +207,15 @@ function main() {
         if (validPingMessage(parsedMessage)) {
           webSocket.send(`PONG :${TWITCH_TMI}`);
         } else if (parsedMessage.command === "PRIVMSG") {
-          // storeUser({
-          //   id: parsedMessage.tags["user-id"],
-          //   name: parsedMessage.tags["display-name"],
-          // });
+          storeUser({
+            id: parsedMessage.tags["room-id"],
+            name: TWITCH_TARGET_CHANNEL,
+          });
+
+          storeUser({
+            id: parsedMessage.tags["user-id"],
+            name: parsedMessage.tags["display-name"],
+          });
 
           storePrivmsg({
             id: parsedMessage.tags.id,
@@ -219,20 +226,20 @@ function main() {
           });
 
           console.log(
-            `${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
+            `${new Date().toLocaleString()} - ${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
           );
-        } else if (parsedMessage.command === "CLEARCHAT") {
-          // storeClearChat({
-          //   id: parsedMessage.tags.id,
-          //   userId: parsedMessage.tags["target-user-id"],
-          //   roomId: parsedMessage.tags["room-id"],
-          //   timestamp: parsedMessage.tags["tmi-sent-ts"],
-          //   message: parsedMessage.params[1],
-          //   duration: parsedMessage.tags["ban-duration"],
-          // });
+        } // else if (parsedMessage.command === "CLEARCHAT") {
+        // storeClearChat({
+        //   id: parsedMessage.tags.id,
+        //   userId: parsedMessage.tags["target-user-id"],
+        //   roomId: parsedMessage.tags["room-id"],
+        //   timestamp: parsedMessage.tags["tmi-sent-ts"],
+        //   message: parsedMessage.params[1],
+        //   duration: parsedMessage.tags["ban-duration"],
+        // });
+        // console.log(parsedMessage);
+        else {
           console.log(parsedMessage);
-        } else {
-          console.log(parsedMessage.command);
         }
       }
     }
