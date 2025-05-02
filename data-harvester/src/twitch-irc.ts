@@ -15,7 +15,7 @@ const TWITCH_PASS = "asdf532"; // PASS <random_string>
 const TWITCH_NICK = "justinfan12345"; // NICK justinfan<random_number>
 
 // todo: Add twitch target channel to users table in database, we must hit the twitch API for this part
-const TWITCH_TARGET_CHANNEL = "missmikkaa";
+const TWITCH_TARGET_CHANNEL = "xqc";
 
 let capabilitiesEnabled = false;
 let authenticated = false;
