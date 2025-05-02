@@ -253,6 +253,12 @@ function main() {
   webSocket.addEventListener("error", (error) => {
     console.error(error);
   });
+
+  // Without this it takes a while for the dockers to shut down
+  process.on("SIGTERM", () => {
+    webSocket.close();
+    process.exit(0);
+  });
 }
 
 main();
