@@ -11,7 +11,7 @@ export default function (fastify, options) {
 
       return rows;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return "Error: Failed to query tracking table";
     }
   });
@@ -71,7 +71,7 @@ export default function (fastify, options) {
         );
         return reply.code(201).send(`Tracking ${name}`);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         return reply
           .code(500)
           .send("Error: Failed to add channel to tracking table");
@@ -110,9 +110,8 @@ export default function (fastify, options) {
           [name]
         );
         return reply.code(200).send(pgResult.rows[0].active);
-        console.log(name);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         return reply.code(500).send("Error: Failed to toggle channel");
       }
     }
@@ -148,7 +147,7 @@ export default function (fastify, options) {
         );
         return reply.code(200).send(`No longer tracking ${name}`);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         return reply
           .code(500)
           .send("Error: Failed to remove channel from tracking");

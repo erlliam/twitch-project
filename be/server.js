@@ -21,7 +21,7 @@ fastify.register(routes, { prefix: "/api/" });
 
 try {
   await fastify.listen({ host: "0.0.0.0", port: 3000 });
-} catch (err) {
-  fastify.log.error(err);
+} catch (error) {
+  fastify.log.error(error);
   process.exit(1);
 }

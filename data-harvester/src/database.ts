@@ -32,8 +32,9 @@ async function createChannelsToTrackTable() {
       channel_id  INT REFERENCES users(id) UNIQUE NOT NULL,
       active      BOOLEAN DEFAULT TRUE
     )`);
-  } catch {
+  } catch (error) {
     console.error("Failed to create track table");
+    console.error(error);
     process.exit();
   }
 }
@@ -47,8 +48,9 @@ async function createPrivmsgTable() {
       timestamp   TIMESTAMPTZ NOT NULL,
       message     TEXT NOT NULL
     )`);
-  } catch {
+  } catch (error) {
     console.error("Failed to create privmsg table");
+    console.error(error);
     process.exit();
   }
 }
@@ -71,6 +73,7 @@ export async function storePrivmsg({
     const values = [id, userId, roomId, timestamp, message];
     await client.query(text, values);
   } catch (error) {
+    console.error("Failed to store message");
     console.error(error);
   }
 }
@@ -81,8 +84,9 @@ async function createUsersTable() {
       id          INT PRIMARY KEY,
       name        TEXT NOT NULL
     )`);
-  } catch {
+  } catch (error) {
     console.error("Failed to create users table");
+    console.error(error);
   }
 }
 
@@ -98,6 +102,7 @@ export async function storeUser({ id, name }: User) {
     const values = [id, name];
     await client.query(text, values);
   } catch (error) {
+    console.error("Failed to store user");
     console.error(error);
   }
 }
