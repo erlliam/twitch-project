@@ -1,6 +1,6 @@
 import { WebSocket, type WebSocket as WebSocketType } from "ws";
 
-import { storePrivmsg, storeUser } from "./database.js";
+import { getChannelsToTrack, storePrivmsg, storeUser } from "./database.js";
 
 interface ParsedMessage {
   tags: Record<string, string>;
@@ -11,11 +11,12 @@ interface ParsedMessage {
 
 const TWITCH_IRC_URI = "wss://irc-ws.chat.twitch.tv:443";
 const TWITCH_TMI = "tmi.twitch.tv";
-const TWITCH_PASS = "asdf532"; // PASS <random_string>
-const TWITCH_NICK = "justinfan12345"; // NICK justinfan<random_number>
+const TWITCH_PASS = "SCHMOOPIIE"; // Use the same password as tmi.js to blend in?
+const TWITCH_NICK = `justinfan${Math.floor(Math.random() * 80000 + 1000)}`;
 
 // todo: Add twitch target channel to users table in database, we must hit the twitch API for this part
 const TWITCH_TARGET_CHANNEL = "xqc";
+console.log(await getChannelsToTrack());
 
 let capabilitiesEnabled = false;
 let authenticated = false;

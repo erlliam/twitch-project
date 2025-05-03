@@ -23,6 +23,53 @@ function initializeTables() {
 
   createUsersTable();
   createPrivmsgTable();
+
+  createNotifyActiveUpdateFunction();
+  createTriggerOnActiveUpdate();
+}
+
+async function createNotifyActiveUpdateFunction() {
+  try {
+    await client.query(`
+      CREATE OR REPLACE FUNCTION notify_track_update() RETURNS trigger AS $$
+        BEGIN
+          PERFORM pg_notify(
+          'track_update',
+          json_build_object(
+            'channel_id', NEW.channel_id,
+            'active', NEW.active
+            )::text
+          );
+          RETURN NEW;
+        END;
+      $$ LANGUAGE plpgsql;
+    `);
+  } catch (error) {
+    console.error("Failed to create active update function");
+    console.error(error);
+    process.exit();
+  }
+}
+
+async function createTriggerOnActiveUpdate() {
+  try {
+    await client.query(`
+      CREATE OR REPLACE TRIGGER trigger_track_update
+      AFTER UPDATE OF active ON track
+      FOR EACH ROW
+      WHEN (OLD.active IS DISTINCT FROM NEW.active)
+      EXECUTE FUNCTION notify_track_update();
+    `);
+  } catch (error) {
+    console.error("Failed to create trigger for active change");
+    console.error(error);
+    process.exit();
+  }
+}
+
+client.query("LISTEN track_update");
+async function onActiveChanged(callback: any) {
+  client.on("notification", callback);
 }
 
 async function createChannelsToTrackTable() {
@@ -36,6 +83,22 @@ async function createChannelsToTrackTable() {
     console.error("Failed to create track table");
     console.error(error);
     process.exit();
+  }
+}
+
+export async function getChannelsToTrack() {
+  try {
+    const result = await client.query(`
+        SELECT users.name
+        FROM users
+        JOIN track ON users.id = track.channel_id
+        WHERE track.active = true;
+      `);
+
+    return result.rows.map((x) => x.name);
+  } catch (error) {
+    console.error("Failed to get active tracking channels");
+    console.error(error);
   }
 }
 
