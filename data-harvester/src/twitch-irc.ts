@@ -14,10 +14,6 @@ const TWITCH_TMI = "tmi.twitch.tv";
 const TWITCH_PASS = "SCHMOOPIIE"; // Use the same password as tmi.js to blend in?
 const TWITCH_NICK = `justinfan${Math.floor(Math.random() * 80000 + 1000)}`;
 
-// todo: Add twitch target channel to users table in database, we must hit the twitch API for this part
-const TWITCH_TARGET_CHANNEL = "xqc";
-console.log(await getChannelsToTrack());
-
 let capabilitiesEnabled = false;
 let authenticated = false;
 let chatJoined = false;
@@ -109,41 +105,6 @@ function validTwitchAuthenticationResponse(parsedMessage: ParsedMessage) {
   );
 }
 
-function validChatJoinedResponse(parsedMessage: ParsedMessage) {
-  const validJoinMessage =
-    parsedMessage.prefix ===
-      `${TWITCH_NICK}!${TWITCH_NICK}@${TWITCH_NICK}.${TWITCH_TMI}` &&
-    parsedMessage.command === "JOIN" &&
-    parsedMessage.params[0] === `#${TWITCH_TARGET_CHANNEL}`;
-
-  const validRoomStateMessage =
-    parsedMessage.prefix === TWITCH_TMI &&
-    parsedMessage.command === "ROOMSTATE" &&
-    parsedMessage.params[0] === `#${TWITCH_TARGET_CHANNEL}`;
-
-  const valid353Message =
-    parsedMessage.prefix === `${TWITCH_NICK}.${TWITCH_TMI}` &&
-    parsedMessage.command === "353" &&
-    parsedMessage.params[0] === TWITCH_NICK &&
-    parsedMessage.params[1] === "=" &&
-    parsedMessage.params[2] === `#${TWITCH_TARGET_CHANNEL}` &&
-    parsedMessage.params[3] === TWITCH_NICK;
-
-  const valid366Message =
-    parsedMessage.prefix === `${TWITCH_NICK}.${TWITCH_TMI}` &&
-    parsedMessage.command === "366" &&
-    parsedMessage.params[0] === TWITCH_NICK &&
-    parsedMessage.params[1] === `#${TWITCH_TARGET_CHANNEL}` &&
-    parsedMessage.params[2] === "End of /NAMES list";
-
-  return (
-    validJoinMessage ||
-    validRoomStateMessage ||
-    valid353Message ||
-    valid366Message
-  );
-}
-
 function validPingMessage(parsedMessage: ParsedMessage) {
   return (
     parsedMessage.command === "PING" &&
@@ -159,7 +120,7 @@ function main() {
     webSocket.send("CAP REQ :twitch.tv/commands twitch.tv/tags");
   });
 
-  webSocket.addEventListener("message", (event) => {
+  webSocket.addEventListener("message", async (event) => {
     const data = event.data;
     if (typeof data !== "string") {
       return;
@@ -190,46 +151,69 @@ function main() {
       );
       if (authenticated) {
         console.log("Authenticated");
-        webSocket.send(`JOIN #${TWITCH_TARGET_CHANNEL}`);
-      }
-    } else if (!chatJoined) {
-      for (const parsedMessage of parsedMessages) {
-        if (validChatJoinedResponse(parsedMessage)) {
-          chatJoinedState[parsedMessage.command] = true;
+        let channelsToJoin: string[] = await getChannelsToTrack();
+        for (const channel of channelsToJoin) {
+          // todo: Investigate join limits. I believe it's like 20 channels for an unauthenticated user.
+          // Then you need to wait like 20 seconds to keep joining?
+          webSocket.send(`JOIN #${channel.toUpperCase()}`);
         }
-      }
-
-      chatJoined = Object.values(chatJoinedState).every((x) => x === true);
-      if (chatJoined) {
-        console.log(`Joined chat room: ${TWITCH_TARGET_CHANNEL}`);
+        console.log(await getChannelsToTrack());
       }
     } else {
       for (const parsedMessage of parsedMessages) {
         if (validPingMessage(parsedMessage)) {
           webSocket.send(`PONG :${TWITCH_TMI}`);
-        } else if (parsedMessage.command === "PRIVMSG") {
-          storeUser({
-            id: parsedMessage.tags["room-id"],
-            name: TWITCH_TARGET_CHANNEL,
-          });
+          return;
+        }
 
-          storeUser({
-            id: parsedMessage.tags["user-id"],
-            name: parsedMessage.tags["display-name"],
-          });
+        switch (parsedMessage.command) {
+          case "353":
+          case "366":
+            break;
 
-          storePrivmsg({
-            id: parsedMessage.tags.id,
-            userId: parseInt(parsedMessage.tags["user-id"]),
-            roomId: parseInt(parsedMessage.tags["room-id"]),
-            timestamp: parseInt(parsedMessage.tags["tmi-sent-ts"]),
-            message: parsedMessage.params[1],
-          });
+          case "PRIVMSG":
+            storeUser({
+              id: parsedMessage.tags["room-id"],
+              name: parsedMessage.params[0].replace("#", ""),
+            });
 
-          console.log(
-            `${new Date().toLocaleString()} - ${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
-          );
-        } // else if (parsedMessage.command === "CLEARCHAT") {
+            storeUser({
+              id: parsedMessage.tags["user-id"],
+              name: parsedMessage.tags["display-name"],
+            });
+
+            storePrivmsg({
+              id: parsedMessage.tags.id,
+              userId: parseInt(parsedMessage.tags["user-id"]),
+              roomId: parseInt(parsedMessage.tags["room-id"]),
+              timestamp: parseInt(parsedMessage.tags["tmi-sent-ts"]),
+              message: parsedMessage.params[1],
+            });
+
+            // todo: Create debug flags or something
+            // console.log(
+            //   `${parsedMessage.params[0]}: ${new Date().toLocaleString()} - ${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
+            // );
+            break;
+
+          case "JOIN":
+            // todo: Keep track of this somewhere. We want the UI to know what channels we are connected to
+            // todo: Determine when we disconnect from a room
+            console.log(`===== Successfully joined ${parsedMessage.params[0]}`);
+            console.log(parsedMessage);
+            console.log("=====");
+            break;
+          case "ROOMSTATE":
+            console.log(`===== Room state for ${parsedMessage.params[0]}`);
+            console.log(parsedMessage);
+            console.log("=====");
+            break;
+
+          default:
+            console.log(parsedMessage);
+        }
+
+        // else if (parsedMessage.command === "CLEARCHAT") {
         // storeClearChat({
         //   id: parsedMessage.tags.id,
         //   userId: parsedMessage.tags["target-user-id"],
@@ -238,10 +222,6 @@ function main() {
         //   message: parsedMessage.params[1],
         //   duration: parsedMessage.tags["ban-duration"],
         // });
-        // console.log(parsedMessage);
-        else {
-          console.log(parsedMessage);
-        }
       }
     }
   });

@@ -86,7 +86,7 @@ async function createChannelsToTrackTable() {
   }
 }
 
-export async function getChannelsToTrack() {
+export async function getChannelsToTrack(): Promise<string[]> {
   try {
     const result = await client.query(`
         SELECT users.name
@@ -100,6 +100,8 @@ export async function getChannelsToTrack() {
     console.error("Failed to get active tracking channels");
     console.error(error);
   }
+
+  return [];
 }
 
 async function createPrivmsgTable() {
