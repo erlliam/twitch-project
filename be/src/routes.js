@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // todo: Determine if we should do server sent events on database active changes
-// Fuck it, let's support fucking "multiple controllers/users"
+// let's support "multiple controllers/users", use SSE
 
 export default function (fastify, options) {
   fastify.get("/tracking", async (request, reply) => {
