@@ -1,10 +1,9 @@
 <template>
   <header>
-    <div class="wrapper">
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-      </nav>
-    </div>
+    <nav>
+      <RouterLink :to="{ name: 'home' }">Home</RouterLink>
+      <RouterLink :to="{ name: 'dataHarvesterConfig' }">Data Harvester Config</RouterLink>
+    </nav>
   </header>
 
   <RouterView />
