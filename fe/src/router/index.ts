@@ -8,6 +8,12 @@ const router = createRouter({
       name: "home",
       component: () => import("@/views/HomeView.vue"),
     },
+
+    {
+      path: "/data-harvester-config",
+      name: "dataHarvesterConfig",
+      component: () => import("@/views/DataHarvesterConfigView.vue"),
+    },
   ],
 });
 
