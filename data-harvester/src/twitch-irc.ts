@@ -1,6 +1,11 @@
 import { WebSocket, type WebSocket as WebSocketType } from "ws";
 
-import { getChannelsToTrack, storePrivmsg, storeUser } from "./database.js";
+import {
+  getChannelsToTrack,
+  onTrackActiveChanged,
+  storePrivmsg,
+  storeUser,
+} from "./database.js";
 
 interface ParsedMessage {
   tags: Record<string, string>;
@@ -16,7 +21,6 @@ const TWITCH_NICK = `justinfan${Math.floor(Math.random() * 80000 + 1000)}`;
 
 let capabilitiesEnabled = false;
 let authenticated = false;
-let chatJoined = false;
 
 const authenticatedState: Record<string, boolean> = {
   "001": false,
@@ -118,6 +122,20 @@ function main() {
   webSocket.addEventListener("open", () => {
     console.log("WebSocket opened");
     webSocket.send("CAP REQ :twitch.tv/commands twitch.tv/tags");
+    // todo: Type this NotificationResponseMessage from pg
+    onTrackActiveChanged((event: any) => {
+      if (event.channel !== "track_update") {
+        return;
+      }
+
+      const { name, active } = JSON.parse(event.payload);
+      if (active) {
+        webSocket.send(`JOIN #${name}`);
+      } else {
+        console.log("we ran part");
+        webSocket.send(`PART #${name},#${name}`);
+      }
+    });
   });
 
   webSocket.addEventListener("message", async (event) => {
@@ -155,9 +173,8 @@ function main() {
         for (const channel of channelsToJoin) {
           // todo: Investigate join limits. I believe it's like 20 channels for an unauthenticated user.
           // Then you need to wait like 20 seconds to keep joining?
-          webSocket.send(`JOIN #${channel.toUpperCase()}`);
+          webSocket.send(`JOIN #${channel}`);
         }
-        console.log(await getChannelsToTrack());
       }
     } else {
       for (const parsedMessage of parsedMessages) {
@@ -191,26 +208,27 @@ function main() {
             });
 
             // todo: Create debug flags or something
-            // console.log(
-            //   `${parsedMessage.params[0]}: ${new Date().toLocaleString()} - ${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
-            // );
+            console.log(
+              `${parsedMessage.params[0]}: ${new Date().toLocaleString()} - ${parsedMessage.tags["display-name"]}: ${parsedMessage.params[1]}`,
+            );
             break;
 
+          // todo: Keep track of these joins and leaves, there is a chance we send
+          // the request but Twitch never responds, seems like not likely though and overengineering to track
           case "JOIN":
-            // todo: Keep track of this somewhere. We want the UI to know what channels we are connected to
-            // todo: Determine when we disconnect from a room
             console.log(`===== Successfully joined ${parsedMessage.params[0]}`);
-            console.log(parsedMessage);
-            console.log("=====");
+            break;
+          case "PART":
+            console.log(`===== Successfully left ${parsedMessage.params[0]}`);
             break;
           case "ROOMSTATE":
-            console.log(`===== Room state for ${parsedMessage.params[0]}`);
-            console.log(parsedMessage);
-            console.log("=====");
+            // console.log(`===== Room state for ${parsedMessage.params[0]}`);
+            // console.log(parsedMessage);
+            // console.log("=====");
             break;
 
           default:
-            console.log(parsedMessage);
+          // console.log(parsedMessage);
         }
 
         // else if (parsedMessage.command === "CLEARCHAT") {

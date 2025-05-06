@@ -50,6 +50,7 @@ export default function (fastify, options) {
 
         const { id, display_name: displayName } = userResponse.data.data[0];
         // todo: UNDUPLICATE THIS FROM dataharvester/src/database@!!!
+        // todo: Make sure displayName exists and what not...
         await fastify.pg.query(
           `
         INSERT INTO users (id, name)

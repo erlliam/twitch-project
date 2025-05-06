@@ -18,26 +18,46 @@ const client = new Client({
 });
 await client.connect();
 
-function initializeTables() {
-  createChannelsToTrackTable();
+async function initializeTables() {
+  await createChannelsToTrackTable();
 
-  createUsersTable();
-  createPrivmsgTable();
+  await createUsersTable();
+  await createPrivmsgTable();
 
-  createNotifyActiveUpdateFunction();
-  createTriggerOnActiveUpdate();
+  await createNotifyActiveUpdateFunction();
+  await createTriggerOnActiveUpdate();
+
+  await client.query("LISTEN track_update");
 }
 
 async function createNotifyActiveUpdateFunction() {
   try {
     await client.query(`
       CREATE OR REPLACE FUNCTION notify_track_update() RETURNS trigger AS $$
+        DECLARE
+          display_name text;
+          channel_id int;
+          is_active boolean;
+
         BEGIN
+          IF TG_OP = 'DELETE' THEN
+            channel_id := OLD.channel_id;
+            is_active = false;
+          ELSE
+            channel_id := NEW.channel_id;
+            is_active = NEW.active;
+          END IF;
+
+          SELECT name into display_name
+          FROM users
+          WHERE id = channel_id;
+
           PERFORM pg_notify(
           'track_update',
           json_build_object(
-            'channel_id', NEW.channel_id,
-            'active', NEW.active
+            'channel_id', channel_id,
+            'name', display_name,
+            'active', is_active
             )::text
           );
           RETURN NEW;
@@ -52,8 +72,22 @@ async function createNotifyActiveUpdateFunction() {
 }
 
 async function createTriggerOnActiveUpdate() {
+  // todo: This triggers if active is false and we delete,
+  // it can cause us to attempt to leave a channel we already weren't inside of.
+  // It seems fine for now, Twitch IRC doesn't care?
+
   try {
     await client.query(`
+      CREATE OR REPLACE TRIGGER trigger_track_insert
+      AFTER INSERT ON track
+      FOR EACH ROW
+      EXECUTE FUNCTION notify_track_update();
+
+      CREATE OR REPLACE TRIGGER trigger_track_delete
+      AFTER DELETE ON track
+      FOR EACH ROW
+      EXECUTE FUNCTION notify_track_update();
+
       CREATE OR REPLACE TRIGGER trigger_track_update
       AFTER UPDATE OF active ON track
       FOR EACH ROW
@@ -67,9 +101,11 @@ async function createTriggerOnActiveUpdate() {
   }
 }
 
-client.query("LISTEN track_update");
-async function onActiveChanged(callback: any) {
+export async function onTrackActiveChanged(callback: any) {
   client.on("notification", callback);
+}
+export async function offTrackActiveChanged(callback: any) {
+  client.off("notification", callback);
 }
 
 async function createChannelsToTrackTable() {
