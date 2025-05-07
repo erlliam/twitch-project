@@ -132,7 +132,6 @@ function main() {
       if (active) {
         webSocket.send(`JOIN #${name}`);
       } else {
-        console.log("we ran part");
         webSocket.send(`PART #${name},#${name}`);
       }
     });

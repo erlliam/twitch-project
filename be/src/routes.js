@@ -42,8 +42,8 @@ export default function (fastify, options) {
           "https://api.twitch.tv/helix/users",
           {
             headers: {
-              Authorization: "Bearer 4u1v9u8lc6apa5u2u94ftg554mqq24",
-              "Client-Id": "f7cf6pk6ez8ccdeieryzkunmdewymq",
+              Authorization: `Bearer ${process.env.TWITCH_TOKEN}`,
+              "Client-Id": process.env.TWITCH_CLIENT_ID,
             },
             params: {
               login: name,

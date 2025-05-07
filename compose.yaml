@@ -38,6 +38,8 @@ services:
 
   api:
     build: ./be
+    env_file:
+      - ./be/.env
     develop:
       watch:
         - action: sync+restart
