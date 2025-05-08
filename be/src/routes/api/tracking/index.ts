@@ -1,10 +1,14 @@
 import axios from "axios";
+import { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
 
 // todo: Determine if we should do server sent events on database active changes
 // let's support "multiple controllers/users", use SSE
 
-export default function (fastify, options) {
-  fastify.get("/tracking", async (request, reply) => {
+const tracking: FastifyPluginAsyncJsonSchemaToTs = async (
+  fastify,
+  opts
+): Promise<void> => {
+  fastify.get("/", async (request, reply) => {
     try {
       const { rows } = await fastify.pg.query(`
         SELECT users.name, track.active
@@ -20,7 +24,7 @@ export default function (fastify, options) {
   });
 
   fastify.post(
-    "/tracking",
+    "/",
     {
       schema: {
         body: {
@@ -28,6 +32,7 @@ export default function (fastify, options) {
           properties: {
             name: { type: "string" },
           },
+          required: ["name"],
         },
       },
     },
@@ -85,7 +90,7 @@ export default function (fastify, options) {
   );
 
   fastify.patch(
-    "tracking/:name",
+    "/:name",
     {
       schema: {
         params: {
@@ -123,7 +128,7 @@ export default function (fastify, options) {
   );
 
   fastify.delete(
-    "/tracking/:name",
+    "/:name",
     {
       schema: {
         params: {
@@ -159,4 +164,6 @@ export default function (fastify, options) {
       }
     }
   );
-}
+};
+
+export default tracking;
