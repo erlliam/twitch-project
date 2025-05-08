@@ -38,6 +38,7 @@ export default function (fastify, options) {
           return reply.code(400).send("Error: Name must be provided");
         }
 
+        // todo: Use TWITCH_CLIENT_SECRET to automatically generate a token?
         const userResponse = await axios.get(
           "https://api.twitch.tv/helix/users",
           {
