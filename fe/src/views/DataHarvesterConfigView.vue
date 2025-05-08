@@ -3,6 +3,17 @@
     <h1>Data Harvester Config</h1>
 
     <div>
+      <h2>Track a Channel</h2>
+      <form @submit.prevent="trackChannel">
+        <label>
+          Name
+          <input v-model="newChannelName" />
+        </label>
+        <button>Track</button>
+      </form>
+    </div>
+
+    <div>
       <h2>Tracked Channels</h2>
       <div v-if="trackingChannelsLoading">Loading...</div>
       <div v-else-if="trackingChannels.length === 0">No channels are currently being tracked</div>
@@ -38,6 +49,9 @@ import { ref } from "vue";
 const trackingChannels = ref<TrackingChannel[]>([]);
 const trackingChannelsLoading = ref(false);
 
+const newChannelName = ref("");
+const newChannelLoading = ref(false);
+
 type TrackingChannelApi = {
   name: string;
   active: boolean;
@@ -67,7 +81,8 @@ async function getTrackingChannels() {
 
 async function toggleTracking(channel: TrackingChannel) {
   if (!channel.name) {
-    console.error("BLOW UP");
+    // todo: Toast error
+    console.error("invalid name");
     return;
   }
 
@@ -86,7 +101,8 @@ async function toggleTracking(channel: TrackingChannel) {
 
 async function deleteTracking(channel: TrackingChannel) {
   if (!channel.name) {
-    console.error("BLOW UP");
+    // todo: Toast error
+    console.error("invalid name");
     return;
   }
 
@@ -100,6 +116,29 @@ async function deleteTracking(channel: TrackingChannel) {
   } finally {
     channel.deleteLoading = false;
     // todo: Toast success
+  }
+}
+
+async function trackChannel() {
+  if (!newChannelName.value) {
+    // todo: Toast error
+    console.error("invalid name");
+    return;
+  }
+
+  newChannelLoading.value = true;
+
+  try {
+    await axios.post("/api/tracking", { name: newChannelName.value });
+    trackingChannels.value.push({
+      name: newChannelName.value,
+      active: true,
+      toggleLoading: false,
+      deleteLoading: false,
+    });
+    newChannelName.value = "";
+  } finally {
+    newChannelLoading.value = false;
   }
 }
 
