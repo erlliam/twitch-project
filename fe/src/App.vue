@@ -1,14 +1,10 @@
 <template>
-  <header>
-    <nav>
-      <RouterLink :to="{ name: 'home' }">Home</RouterLink>
-      <RouterLink :to="{ name: 'dataHarvesterConfig' }">Data Harvester Config</RouterLink>
-    </nav>
-  </header>
+  <TopBar />
 
   <RouterView />
 </template>
 
 <script setup lang="ts">
-import { RouterLink, RouterView } from "vue-router";
+import { RouterView } from "vue-router";
+import TopBar from "@/components/TopBar.vue";
 </script>
