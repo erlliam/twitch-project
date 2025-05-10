@@ -10,6 +10,12 @@ const router = createRouter({
     },
 
     {
+      path: "/channel/:name",
+      name: "channelHome",
+      component: () => import("@/views/ChannelHomeView.vue"),
+    },
+
+    {
       path: "/data-harvester-config",
       name: "dataHarvesterConfig",
       component: () => import("@/views/DataHarvesterConfigView.vue"),
