@@ -19,7 +19,7 @@ const tracking: FastifyPluginAsyncJsonSchemaToTs = async (
       return rows;
     } catch (error) {
       console.error(error);
-      return "Error: Failed to query tracking table";
+      return reply.code(500).send("Error: Failed to query tracking table");
     }
   });
 
